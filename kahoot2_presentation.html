@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahoot Quiz - Викторина про Ксюшу</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', 'Arial', sans-serif;
+            overflow-x: hidden;
+            background: #46178f;
+        }
+
+        .container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .start-screen, .question-screen, .result-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .start-screen.active, .question-screen.active, .result-screen.active {
+            display: block;
+        }
+
+        .start-screen h1 {
+            font-size: 48px;
+            color: #46178f;
+            margin-bottom: 20px;
+        }
+
+        .start-screen p {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            background: #46178f;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a1fb3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(70, 23, 143, 0.3);
+        }
+
+        .question-header {
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #46178f;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .answer-option {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+
+        .answer-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .answer-option.selected {
+            border-color: #46178f;
+            background: #f0e6ff;
+        }
+
+        .answer-option.red { background: #e21b3c; color: white; }
+        .answer-option.blue { background: #1368ce; color: white; }
+        .answer-option.yellow { background: #ffa602; color: white; }
+        .answer-option.green { background: #26890c; color: white; }
+        .answer-option.purple { background: #7b2cbf; color: white; }
+        .answer-option.orange { background: #ff6b35; color: white; }
+
+        .answer-option.red.selected { border-color: #fff; box-shadow: 0 0 0 4px #e21b3c; }
+        .answer-option.blue.selected { border-color: #fff; box-shadow: 0 0 0 4px #1368ce; }
+        .answer-option.yellow.selected { border-color: #fff; box-shadow: 0 0 0 4px #ffa602; }
+        .answer-option.green.selected { border-color: #fff; box-shadow: 0 0 0 4px #26890c; }
+        .answer-option.purple.selected { border-color: #fff; box-shadow: 0 0 0 4px #7b2cbf; }
+        .answer-option.orange.selected { border-color: #fff; box-shadow: 0 0 0 4px #ff6b35; }
+
+        .answer-letter {
+            font-size: 24px;
+            margin-right: 12px;
+            font-weight: bold;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #46178f;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .nav-btn {
+            background: #46178f;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #5a1fb3;
+        }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #46178f 0%, #7b2cbf 100%);
+            transition: width 0.3s;
+        }
+
+        .result-screen h2 {
+            font-size: 42px;
+            color: #46178f;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 72px;
+            font-weight: bold;
+            color: #26890c;
+            margin: 30px 0;
+        }
+
+        .result-message {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .answers-review {
+            text-align: left;
+            margin-top: 40px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .review-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #ddd;
+        }
+
+        .review-item.correct {
+            border-left-color: #26890c;
+        }
+
+        .review-item.incorrect {
+            border-left-color: #e21b3c;
+        }
+
+        .review-question {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .review-answer {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .review-answer.correct-answer {
+            color: #26890c;
+        }
+
+        .review-answer.incorrect-answer {
+            color: #e21b3c;
+        }
+
+        @media (max-width: 768px) {
+            .quiz-container {
+                padding: 20px;
+            }
+
+            .start-screen h1 {
+                font-size: 36px;
+            }
+
+            .question-text {
+                font-size: 22px;
+            }
+
+            .answers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .score {
+                font-size: 56px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="quiz-container">
+            <!-- Start Screen -->
+            <div class="start-screen active">
+                <h1>🎮 KAHOOT! 🎮</h1>
+                <p>Викторина про Ксюшу</p>
+                <p style="font-size: 18px; color: #999; margin-bottom: 30px;">15 вопросов</p>
+                <button class="btn" onclick="startQuiz()">Начать викторину</button>
+            </div>
+
+            <!-- Question Screen -->
+            <div class="question-screen">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="question-header">
+                    <div class="question-number" id="questionNumber">Вопрос 1 из 15</div>
+                    <div class="question-text" id="questionText"></div>
+                </div>
+
+                <div id="answersContainer"></div>
+
+                <div class="navigation">
+                    <button class="nav-btn" id="prevBtn" onclick="previousQuestion()">← Назад</button>
+                    <button class="nav-btn" id="nextBtn" onclick="nextQuestion()">Далее →</button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div class="result-screen">
+                <h2>🎉 Викторина завершена! 🎉</h2>
+                <div class="score" id="finalScore">0/15</div>
+                <div class="result-message" id="resultMessage"></div>
+                <button class="btn" onclick="showReview()">Посмотреть ответы</button>
+                <button class="btn" onclick="restartQuiz()" style="margin-left: 10px; background: #26890c;">Пройти снова</button>
+                
+                <div class="answers-review" id="answersReview" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Причина почему вы здесь?",
+                type: "multiple",
+                options: [
+                    { letter: "A", text: "Проверить, везде ли убрана пыль", color: "red" },
+                    { letter: "B", text: "Положить плитку", color: "blue" },
+                    { letter: "C", text: "Покурить со Стивом", color: "yellow" },
+                    { letter: "D", text: "Майкл хотел в садик", color: "green" },
+                    { letter: "E", text: "Посмотреть как там стрижка", color: "purple" },
+                    { letter: "F", text: "Попить пивка", color: "orange" }
+                ],
+                correctAnswers: ["A", "B", "C", "D", "E", "F"]
+            },
+            {
+                question: "Любимый плейс для покушать у Ксюши?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "StPatrick", color: "red" },
+                    { letter: "B", text: "ShaurmaKebab", color: "blue" },
+                    { letter: "C", text: "Little Japan", color: "yellow" },
+                    { letter: "D", text: "Selver või Prisma toitlustus", color: "green" }
+                ],
+                correctAnswers: ["C"]
+            },
+            {
+                question: "Какой любимый цвет у Ксюши?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "Синий", color: "red" },
+                    { letter: "B", text: "Сиреневый", color: "blue" },
+                    { letter: "C", text: "Красный", color: "yellow" },
+                    { letter: "D", text: "Бирюзовый", color: "green" },
+                    { letter: "E", text: "Бордовый", color: "purple" },
+                    { letter: "F", text: "Черный", color: "orange" }
+                ],
+                correctAnswers: ["D"]
+            },
+            {
+                question: "В каком клубе работает Ксюша?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "SK Nord", color: "red" },
+                    { letter: "B", text: "RG Dristal", color: "blue" },
+                    { letter: "C", text: "VK Piruett", color: "yellow" },
+                    { letter: "D", text: "RG Crystal", color: "green" }
+                ],
+                correctAnswers: ["D"]
+            },
+            {
+                question: "Любимое блюдо у Ксюши?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "Том ям", color: "red" },
+                    { letter: "B", text: "Солянка", color: "blue" },
+                    { letter: "C", text: "Суши", color: "yellow" },
+                    { letter: "D", text: "Prisma toitlustus", color: "green" }
+                ],
+                correctAnswers: ["B"]
+            },
+            {
+                question: "Что Ксюша говорит чаще всего на работе? Выбери несколько.",
+                type: "multiple",
+                options: [
+                    { letter: "A", text: "Бляяя, заебали", color: "red" },
+                    { letter: "B", text: "По машинам!", color: "blue" },
+                    { letter: "C", text: "Сначала покурим?", color: "yellow" },
+                    { letter: "D", text: "А нахер они не хотят пойти?", color: "green" }
+                ],
+                correctAnswers: ["A", "B", "C", "D"]
+            },
+            {
+                question: "Правда ли что Ксюша засыпает за пару минут?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "True", color: "red" },
+                    { letter: "B", text: "False", color: "blue" }
+                ],
+                correctAnswers: ["A"]
+            },
+            {
+                question: "В играх Ксюша использует ник xXxNAGIBATOR666xXx?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "True", color: "red" },
+                    { letter: "B", text: "False", color: "blue" }
+                ],
+                correctAnswers: ["B"]
+            },
+            {
+                question: "В каких местах работала Ксюша? Выбери несколько",
+                type: "multiple",
+                options: [
+                    { letter: "A", text: "CircleK", color: "red" },
+                    { letter: "B", text: "McDonalds", color: "blue" },
+                    { letter: "C", text: "Клининг", color: "yellow" },
+                    { letter: "D", text: "OnlyFans", color: "green" },
+                    { letter: "E", text: "Ресторан", color: "purple" },
+                    { letter: "F", text: "Парк аттракционов", color: "orange" }
+                ],
+                correctAnswers: ["A", "E", "F"]
+            },
+            {
+                question: "Какое любимое время года у Ксюши?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "Лето", color: "red" },
+                    { letter: "B", text: "Осень", color: "blue" },
+                    { letter: "C", text: "Зима", color: "yellow" },
+                    { letter: "D", text: "Весна", color: "green" }
+                ],
+                correctAnswers: ["C"]
+            },
+            {
+                question: "Если бы Ксюша была бы геймером, то какой бы ник у нее был бы?",
+                type: "text",
+                correctAnswers: ["any"]
+            },
+            {
+                question: "Какой девиз у Ксюши по жизни?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "Бей и беги", color: "red" },
+                    { letter: "B", text: "Не ищи момента, создавай его сам", color: "blue" },
+                    { letter: "C", text: "Живем один раз", color: "yellow" },
+                    { letter: "D", text: "Меньше знаешь, крепче спишь", color: "green" }
+                ],
+                correctAnswers: ["C"]
+            },
+            {
+                question: "Какое качество Ксюша ценит в себе больше всего?",
+                type: "single",
+                options: [
+                    { letter: "A", text: "Искренность", color: "red" },
+                    { letter: "B", text: "Лидерство", color: "blue" },
+                    { letter: "C", text: "Харизма", color: "yellow" },
+                    { letter: "D", text: "Двуглавая икроножная мышца", color: "green" }
+                ],
+                correctAnswers: ["A"]
+            },
+            {
+                question: "Какие качества вы больше всего цените в Ксюше?",
+                type: "text",
+                correctAnswers: ["any"]
+            },
+            {
+                question: "Напишите пожелание для Ксюши",
+                type: "text",
+                correctAnswers: ["any"]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = [];
+
+        function startQuiz() {
+            document.querySelector('.start-screen').classList.remove('active');
+            document.querySelector('.question-screen').classList.add('active');
+            userAnswers = new Array(questions.length).fill(null);
+            showQuestion(0);
+        }
+
+        function showQuestion(index) {
+            currentQuestion = index;
+            const question = questions[index];
+            
+            document.getElementById('questionNumber').textContent = `Вопрос ${index + 1} из ${questions.length}`;
+            document.getElementById('questionText').textContent = question.question;
+            
+            const progress = ((index + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            const container = document.getElementById('answersContainer');
+            container.innerHTML = '';
+
+            if (question.type === 'text') {
+                const textarea = document.createElement('textarea');
+                textarea.className = 'text-input';
+                textarea.placeholder = 'Напишите свой ответ здесь...';
+                textarea.value = userAnswers[index] || '';
+                textarea.oninput = (e) => {
+                    userAnswers[index] = e.target.value;
+                };
+                container.appendChild(textarea);
+            } else {
+                const grid = document.createElement('div');
+                grid.className = 'answers-grid';
+
+                question.options.forEach(option => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = `answer-option ${option.color}`;
+                    
+                    if (question.type === 'multiple') {
+                        const isSelected = userAnswers[index] && userAnswers[index].includes(option.letter);
+                        if (isSelected) answerDiv.classList.add('selected');
+                    } else {
+                        if (userAnswers[index] === option.letter) answerDiv.classList.add('selected');
+                    }
+
+                    answerDiv.innerHTML = `<span class="answer-letter">${option.letter}</span>${option.text}`;
+                    
+                    answerDiv.onclick = () => selectAnswer(option.letter, question.type);
+                    grid.appendChild(answerDiv);
+                });
+
+                container.appendChild(grid);
+            }
+
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').textContent = index === questions.length - 1 ? 'Завершить' : 'Далее →';
+        }
+
+        function selectAnswer(letter, type) {
+            if (type === 'multiple') {
+                if (!userAnswers[currentQuestion]) {
+                    userAnswers[currentQuestion] = [];
+                }
+                const index = userAnswers[currentQuestion].indexOf(letter);
+                if (index > -1) {
+                    userAnswers[currentQuestion].splice(index, 1);
+                } else {
+                    userAnswers[currentQuestion].push(letter);
+                }
+            } else {
+                userAnswers[currentQuestion] = letter;
+            }
+            showQuestion(currentQuestion);
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                showQuestion(currentQuestion + 1);
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                showQuestion(currentQuestion - 1);
+            }
+        }
+
+        function showResults() {
+            let score = 0;
+
+            questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                
+                if (question.type === 'text') {
+                    if (userAnswer && userAnswer.trim() !== '') {
+                        score++;
+                    }
+                } else if (question.type === 'multiple') {
+                    const correctSet = new Set(question.correctAnswers);
+                    const userSet = new Set(userAnswer || []);
+                    
+                    if (correctSet.size === userSet.size && 
+                        [...correctSet].every(ans => userSet.has(ans))) {
+                        score++;
+                    }
+                } else {
+                    if (question.correctAnswers.includes(userAnswer)) {
+                        score++;
+                    }
+                }
+            });
+
+            document.querySelector('.question-screen').classList.remove('active');
+            document.querySelector('.result-screen').classList.add('active');
+            
+            document.getElementById('finalScore').textContent = `${score}/${questions.length}`;
+            
+            let message = '';
+            const percentage = (score / questions.length) * 100;
+            
+            if (percentage === 100) {
+                message = 'Невероятно! Ты знаешь Ксюшу идеально! 🌟';
+            } else if (percentage >= 80) {
+                message = 'Отлично! Ты очень хорошо знаешь Ксюшу! 🎉';
+            } else if (percentage >= 60) {
+                message = 'Хорошо! Неплохое знание! 👍';
+            } else if (percentage >= 40) {
+                message = 'Неплохо, но есть куда расти! 📚';
+            } else {
+                message = 'Стоит узнать Ксюшу получше! 💪';
+            }
+            
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        function showReview() {
+            const reviewContainer = document.getElementById('answersReview');
+            reviewContainer.innerHTML = '';
+            reviewContainer.style.display = 'block';
+
+            questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                let isCorrect = false;
+                let correctAnswerText = '';
+                let userAnswerText = '';
+
+                if (question.type === 'text') {
+                    isCorrect = userAnswer && userAnswer.trim() !== '';
+                    userAnswerText = userAnswer || 'Не отвечено';
+                    correctAnswerText = 'Любой ответ';
+                } else if (question.type === 'multiple') {
+                    const correctSet = new Set(question.correctAnswers);
+                    const userSet = new Set(userAnswer || []);
+                    isCorrect = correctSet.size === userSet.size && 
+                               [...correctSet].every(ans => userSet.has(ans));
+                    
+                    const correctOptions = question.options.filter(opt => 
+                        question.correctAnswers.includes(opt.letter)
+                    ).map(opt => `${opt.letter}) ${opt.text}`).join(', ');
+                    
+                    const userOptions = userAnswer ? question.options.filter(opt => 
+                        userAnswer.includes(opt.letter)
+                    ).map(opt => `${opt.letter}) ${opt.text}`).join(', ') : 'Не отвечено';
+                    
+                    correctAnswerText = correctOptions;
+                    userAnswerText = userOptions;
+                } else {
+                    isCorrect = question.correctAnswers.includes(userAnswer);
+                    const correctOption = question.options.find(opt => 
+                        question.correctAnswers.includes(opt.letter)
+                    );
+                    const userOption = question.options.find(opt => opt.letter === userAnswer);
+                    
+                    correctAnswerText = correctOption ? `${correctOption.letter}) ${correctOption.text}` : '';
+                    userAnswerText = userOption ? `${userOption.letter}) ${userOption.text}` : 'Не отвечено';
+                }
+
+                const reviewItem = document.createElement('div');
+                reviewItem.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+                reviewItem.innerHTML = `
+                    <div class="review-question">Вопрос ${index + 1}: ${question.question}</div>
+                    <div class="review-answer ${isCorrect ? 'correct-answer' : 'incorrect-answer'}">
+                        ${isCorrect ? '✓' : '✗'} Ваш ответ: ${userAnswerText}
+                    </div>
+                    ${!isCorrect && question.type !== 'text' ? `
+                        <div class="review-answer correct-answer">
+                            ✓ Правильный ответ: ${correctAnswerText}
+                        </div>
+                    ` : ''}
+                `;
+                reviewContainer.appendChild(reviewItem);
+            });
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            userAnswers = [];
+            document.querySelector('.result-screen').classList.remove('active');
+            document.querySelector('.start-screen').classList.add('active');
+            document.getElementById('answersReview').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
